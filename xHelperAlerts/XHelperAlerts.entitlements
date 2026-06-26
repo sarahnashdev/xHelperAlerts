@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        xHelperAlerts runs OUTSIDE the App Sandbox by design — it needs to
+        read and write ~/.xhelper-alerts/, ~/.claude/, and
+        ~/Library/Developer/Xcode/.../ClaudeAgentConfig/. Mac App Store
+        distribution would require the sandbox; for Developer ID
+        distribution we leave it off.
+
+        The hardened-runtime options below are intentionally minimal. The
+        app only spawns first-party tools (afplay, osascript, python3) via
+        Process(), which is allowed under the default hardened runtime —
+        no special exceptions needed.
+    -->
+</dict>
+</plist>
