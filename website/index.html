@@ -59,6 +59,13 @@
   .micro{color:var(--muted);font-size:13px;letter-spacing:.02em}
   .micro .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#9aa1b3;margin:0 8px;vertical-align:middle;opacity:.5}
 
+  .badges{display:flex;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .badge-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:7px 14px;border-radius:999px;font-size:13.5px;color:var(--text);font-variant-numeric:tabular-nums;transition:background .15s ease, border-color .15s ease, transform .15s ease}
+  .badge-pill:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);transform:translateY(-1px)}
+  .badge-pill svg{width:14px;height:14px;color:var(--accent-b)}
+  .badge-pill #stars-count, .badge-pill #downloads-count{font-weight:600}
+  .badge-label{color:var(--muted)}
+
   /* ─── menu-bar preview ─── */
   .preview{margin-top:80px;display:flex;justify-content:center}
   .menubar{display:flex;align-items:center;gap:16px;background:rgba(15,15,22,.85);border:1px solid var(--line);padding:10px 18px;border-radius:14px;backdrop-filter:blur(20px);font-size:14px;color:#cdd0db;box-shadow:0 30px 70px -25px rgba(0,0,0,.8)}
@@ -144,6 +151,19 @@
     </div>
 
     <p class="micro">Free<span class="dot"></span>Signed with Apple Developer ID<span class="dot"></span>Notarized<span class="dot"></span>Apple Silicon &amp; Intel</p>
+
+    <div class="badges">
+      <a class="badge-pill" href="https://github.com/sarahnashdev/xHelperAlerts/stargazers" id="stars-pill">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27z"/></svg>
+        <span id="stars-count">—</span>
+        <span class="badge-label">Stars</span>
+      </a>
+      <a class="badge-pill" href="https://github.com/sarahnashdev/xHelperAlerts/releases" id="downloads-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v14"/><path d="m6 13 6 6 6-6"/><path d="M5 21h14"/></svg>
+        <span id="downloads-count">—</span>
+        <span class="badge-label">Downloads</span>
+      </a>
+    </div>
 
     <div class="preview">
       <div class="menubar">
@@ -243,12 +263,32 @@
 </footer>
 
 <script>
+  // Scroll-reveal
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
       if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
     }
   }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Live stars + downloads from GitHub's public API. Unauthenticated
+  // rate limit is 60 req/hour per IP, which is plenty for a static page.
+  const REPO = 'sarahnashdev/xHelperAlerts';
+  const fmt = (n) => n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+
+  fetch(`https://api.github.com/repos/${REPO}`)
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d) document.getElementById('stars-count').textContent = fmt(d.stargazers_count); })
+    .catch(() => {});
+
+  fetch(`https://api.github.com/repos/${REPO}/releases`)
+    .then(r => r.ok ? r.json() : null)
+    .then(rels => {
+      if (!Array.isArray(rels)) return;
+      const total = rels.reduce((s, r) => s + (r.assets || []).reduce((a, x) => a + (x.download_count || 0), 0), 0);
+      document.getElementById('downloads-count').textContent = fmt(total);
+    })
+    .catch(() => {});
 </script>
 </body>
 </html>
