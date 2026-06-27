@@ -50,7 +50,10 @@ post_banner() {
     [ "$NOTIFICATIONS_ENABLED" = "true" ] || return 0
     [ "$BANNER_ENABLED" = "true" ] || return 0
     local message="${1:-Claude ran a tool}"
-    /usr/bin/osascript -e "display notification \"$message\" with title \"xHelperAlerts\" subtitle \"Auto-approved\"" >/dev/null 2>&1 &
+    # Hand the banner off to the Swift app via a file. Avoids
+    # `osascript -e "display notification"` (Script Editor on Tahoe).
+    local safe=$(printf '%s' "$message" | tr '\n\t' '  ')
+    printf 'xHelperAlerts\t%s\n' "$safe" >> "$HOME/.xhelper-alerts/banner-request"
 }
 
 # Pull tool name + a short command snippet out of the JSON payload for logging.

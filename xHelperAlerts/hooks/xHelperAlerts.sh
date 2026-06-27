@@ -42,8 +42,11 @@ if [ "$SOUND_ENABLED" = "true" ]; then
 fi
 
 if [ "$BANNER_ENABLED" = "true" ]; then
-    ESCAPED=${MESSAGE//\"/\\\"}
-    /usr/bin/osascript -e "display notification \"$ESCAPED\" with title \"xHelperAlerts\" subtitle \"Claude is waiting\""
+    # Hand the banner off to the Swift app via a file. Avoids
+    # `osascript -e "display notification"`, which on macOS Tahoe
+    # routes the request through Script Editor.
+    SAFE=$(printf '%s' "$MESSAGE" | tr '\n\t' '  ')
+    printf 'xHelperAlerts\t%s\n' "$SAFE" >> "$HOME/.xhelper-alerts/banner-request"
 fi
 
 exit 0

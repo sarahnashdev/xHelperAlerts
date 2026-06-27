@@ -5,8 +5,8 @@ import Sparkle
 
 /// Thin SwiftUI-friendly wrapper around Sparkle's update controller.
 /// Exposes the two pieces of state the rest of the app needs
-/// (`updateAvailable`, `latestVersion`) and the actions the UI calls
-/// (`checkForUpdates`, `openDownloadPage`).
+/// (`updateAvailable`, `latestVersion`) and a single `checkForUpdates`
+/// action that triggers Sparkle's native install dialog.
 ///
 /// Sparkle handles the heavy lifting: appcast.xml polling, EdDSA
 /// signature verification, download, drag-replace into /Applications,
@@ -42,9 +42,9 @@ final class UpdateChecker: NSObject, ObservableObject, SPUUpdaterDelegate, SPUSt
         updaterController.checkForUpdates(nil)
     }
 
-    /// Same as `checkForUpdates` — kept for API compatibility with the
-    /// old in-house checker. Buttons in the popover/About now trigger
-    /// Sparkle's native install flow rather than opening the browser.
+    /// Alias for `checkForUpdates`. Popover and About-tab banners
+    /// call this so older names in those views keep working without
+    /// duplicate logic.
     func openDownloadPage() {
         checkForUpdates()
     }

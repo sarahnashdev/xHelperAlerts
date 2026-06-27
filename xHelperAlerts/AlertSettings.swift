@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import UserNotifications
 
 /// Persistent settings for xHelperAlerts. Backed by
 /// `~/.xhelper-alerts/config.json` so the hook scripts can read the same
@@ -152,13 +153,26 @@ final class AlertSettings: ObservableObject {
     func testNotifications() {
         guard notificationsEnabled else { return }
         if soundEnabled { Self.playSound(named: soundName) }
-        if bannerEnabled {
-            Self.runShell("/usr/bin/osascript", args: [
-                "-e",
-                """
-                display notification "xHelperAlerts is listening" with title "xHelperAlerts"
-                """
-            ])
+        if bannerEnabled { Self.postBanner(title: "xHelperAlerts", body: "xHelperAlerts is listening") }
+    }
+
+    /// Posts a banner via the native UserNotifications framework — no
+    /// osascript, no Script Editor pop-up on macOS Tahoe. Permission is
+    /// requested on first call; if the user later turns the app off in
+    /// System Settings → Notifications, the request silently no-ops.
+    private static func postBanner(title: String, body: String) {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .badge]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            let req = UNNotificationRequest(
+                identifier: UUID().uuidString,
+                content: content,
+                trigger: nil  // fire immediately
+            )
+            center.add(req, withCompletionHandler: nil)
         }
     }
 
@@ -175,16 +189,6 @@ final class AlertSettings: ObservableObject {
         proc.executableURL = URL(fileURLWithPath: launchPath)
         proc.arguments = args
         try? proc.run()
-    }
-
-    // MARK: - Diagnostics
-
-    var hooksInstalled: Bool {
-        let fm = FileManager.default
-        let dir = fm.homeDirectoryForCurrentUser
-            .appendingPathComponent("\(Self.configDirName)/hooks")
-        return fm.fileExists(atPath: dir.appendingPathComponent("xHelperAlerts.sh").path)
-            && fm.fileExists(atPath: dir.appendingPathComponent("xhelper-auto-approve.sh").path)
     }
 
     /// Version string read from the bundle's Info.plist

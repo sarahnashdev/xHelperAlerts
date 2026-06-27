@@ -238,8 +238,8 @@ private struct CustomizationCard: View {
         )
     }
 
-    /// Generic Color binding that reads from a keypath on the account
-    /// and writes through a `setColor`-style method on the tracker.
+    /// Generic Color binding that reads a colour off the account via
+    /// the given key path and writes through the tracker's setter.
     private func colorBinding(_ keyPath: KeyPath<RememberedAccount, ColorRGBA?>,
                               set setter: @escaping (ColorRGBA?, String) -> Void)
                               -> Binding<Color> {

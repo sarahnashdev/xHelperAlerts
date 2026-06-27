@@ -40,9 +40,10 @@ enum IconRenderer {
         path.fill()
 
         if let glyph = NSImage(named: "DockGlyph") {
-            // Centered with generous padding so the glyph reads at
-            // small dock sizes too.
-            let inset: CGFloat = 200
+            // Tight inset so the spark + stars fill the icon — small
+            // dock sizes still read fine because the glyph itself has
+            // built-in padding inside its 1024-px canvas.
+            let inset: CGFloat = 100
             let glyphRect = rect.insetBy(dx: inset, dy: inset)
             glyph.draw(in: glyphRect,
                        from: .zero,

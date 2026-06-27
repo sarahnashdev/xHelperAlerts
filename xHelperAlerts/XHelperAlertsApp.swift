@@ -80,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         installStatusItem()
         installPopover()
         subscribeToStateChanges()
+        BannerWatcher.shared.start()
         refreshStatusItem()
         IconRenderer.apply(activeColor: state.accounts.active?.glyphColor)
 
@@ -304,7 +305,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         tint.setFill()
         path.fill()
         if let glyph = NSImage(named: "DockGlyph") {
-            let inset: CGFloat = 3
+            // Minimal inset so the spark + stars dominate the badge.
+            let inset: CGFloat = 2
             let glyphRect = rect.insetBy(dx: inset, dy: inset)
             glyph.draw(in: glyphRect, from: .zero, operation: .sourceOver, fraction: 1.0)
         }
