@@ -5,6 +5,7 @@ import AppKit
 /// two essential actions (reinstall hooks, copy uninstall command), and
 /// a couple of troubleshooting bullets — nothing more.
 struct AboutView: View {
+    @EnvironmentObject var updates: UpdateChecker
     @State private var copiedUninstall = false
     @State private var lastReinstall: Date?
 
@@ -12,6 +13,7 @@ struct AboutView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 header
+                updateBanner
 
                 Text("xHelperAlerts pings you the moment Claude Code (Xcode's in-IDE AI) needs your approval, and can auto-approve common tool calls when you want it to.")
                     .font(.body)
@@ -23,6 +25,42 @@ struct AboutView: View {
             }
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private var updateBanner: some View {
+        if updates.updateAvailable, let v = updates.latestVersion {
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("xHelperAlerts \(v) is available")
+                        .font(.headline)
+                    Text("You're running v\(AlertSettings.appVersion).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Download") { updates.openDownloadPage() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+            }
+            .padding(12)
+            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.orange.opacity(0.35), lineWidth: 1))
+        } else {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                Text("You're on the latest version.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Check for updates") { updates.checkForUpdates() }
+                    .buttonStyle(.bordered)
+            }
         }
     }
 

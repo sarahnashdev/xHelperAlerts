@@ -7,9 +7,35 @@ import AppKit
 struct AlertMenuView: View {
     @EnvironmentObject var settings: AlertSettings
     @EnvironmentObject var accounts: AccountTracker
+    @EnvironmentObject var updates: UpdateChecker
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if updates.updateAvailable, let v = updates.latestVersion {
+                Button {
+                    dismissPopover()
+                    updates.openDownloadPage()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Update available")
+                                .font(.callout.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text("Version \(v) — click to download")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(8)
+                    .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                Divider()
+            }
+
             toggleRow(isOn: $settings.notificationsEnabled,
                       icon: "bell.badge.fill",
                       label: "Notifications")

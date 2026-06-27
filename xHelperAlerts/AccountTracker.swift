@@ -71,57 +71,26 @@ final class AccountTracker: ObservableObject {
         save()
     }
 
-    /// Activates Xcode and (best-effort) sends Cmd+, to open its
-    /// Settings window. The keystroke needs Accessibility permission
-    /// for xHelperAlerts; if it's not granted, Xcode still comes
-    /// forward and the user is shown a one-click path into the
-    /// Accessibility settings pane.
+    /// Brings Xcode forward via NSWorkspace. No AppleScript, no
+    /// Accessibility permission, no Script Editor pop-ups — just
+    /// activates the app. The user presses Cmd+, themselves once
+    /// Xcode is focused (it's already the standard Settings shortcut
+    /// they know).
     ///
     /// We deliberately don't try to mutate Xcode's keychain entries —
     /// that schema is undocumented and would break on each Claude
     /// update.
     func openXcodeForAccountSwitch() {
-        // Step 1: bring Xcode forward. `open -a` never needs special
-        // permission, so this always works.
-        let open = Process()
-        open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        open.arguments = ["-a", "Xcode"]
-        try? open.run()
-        open.waitUntilExit()
-
-        // Step 2: try Cmd+, via osascript. Fails (exit 1) if the user
-        // hasn't granted Accessibility permission. Don't surface the
-        // raw error — show a friendly prompt instead.
-        let script = "tell application \"System Events\" to tell process \"Xcode\" to keystroke \",\" using command down"
-        let keystroke = Process()
-        keystroke.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        keystroke.arguments = ["-e", script]
-        keystroke.standardError = Pipe()
-        try? keystroke.run()
-        keystroke.waitUntilExit()
-        if keystroke.terminationStatus != 0 {
-            DispatchQueue.main.async { Self.promptForAccessibility() }
-        }
-    }
-
-    /// Opens System Settings directly to Privacy & Security →
-    /// Accessibility, so the user can flip xHelperAlerts on.
-    static func openAccessibilitySettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private static func promptForAccessibility() {
-        let alert = NSAlert()
-        alert.messageText = "Let xHelperAlerts open Xcode Settings for you"
-        alert.informativeText = """
-        Xcode is open. To skip the manual Cmd+, step next time, allow xHelperAlerts in System Settings → Privacy & Security → Accessibility, then try again.
-        """
-        alert.addButton(withTitle: "Open Accessibility Settings")
-        alert.addButton(withTitle: "Not now")
-        if alert.runModal() == .alertFirstButtonReturn {
-            openAccessibilitySettings()
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.dt.Xcode") {
+            let cfg = NSWorkspace.OpenConfiguration()
+            cfg.activates = true
+            NSWorkspace.shared.openApplication(at: url, configuration: cfg, completionHandler: nil)
+        } else {
+            // Fallback if Xcode isn't found by bundle id (rare).
+            let open = Process()
+            open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+            open.arguments = ["-a", "Xcode"]
+            try? open.run()
         }
     }
 

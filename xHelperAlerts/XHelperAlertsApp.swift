@@ -39,9 +39,11 @@ final class AppState {
     static let shared = AppState()
     let settings: AlertSettings
     let accounts: AccountTracker
+    let updates: UpdateChecker
     private init() {
         self.settings = AlertSettings()
         self.accounts = AccountTracker()
+        self.updates = UpdateChecker()
     }
 }
 
@@ -114,11 +116,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func refreshStatusItem() {
         guard let button = statusItem.button else { return }
         let active = state.accounts.active
+        let updateAvailable = state.updates.updateAvailable
 
         // Glyph — when a colour is set, draw a rounded colored badge
         // with the white DockGlyph centred inside it. Otherwise fall
         // back to the bundled MenuBarIcon (template, system-tinted).
-        let glyphImage: NSImage
+        var glyphImage: NSImage
         if let rgba = active?.glyphColor {
             glyphImage = Self.menuBarBadge(tint: Self.nsColor(rgba))
             glyphImage.isTemplate = false
@@ -126,6 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             glyphImage = plain
         } else {
             glyphImage = NSImage()
+        }
+        if updateAvailable {
+            glyphImage = Self.overlayUpdateDot(on: glyphImage)
+            glyphImage.isTemplate = false
         }
         button.image = glyphImage
         button.imagePosition = .imageLeading
@@ -155,6 +162,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.refreshStatusItem() }
             .store(in: &cancellables)
+        state.updates.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.refreshStatusItem() }
+            .store(in: &cancellables)
     }
 
     private func labelText(for account: RememberedAccount?) -> String? {
@@ -179,6 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AlertMenuView()
                 .environmentObject(state.settings)
                 .environmentObject(state.accounts)
+                .environmentObject(state.updates)
         )
         popover.contentViewController = hosting
     }
@@ -205,6 +217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let view = SettingsView()
             .environmentObject(state.settings)
             .environmentObject(state.accounts)
+            .environmentObject(state.updates)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 700, height: 580),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -246,6 +259,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func dismissColorPanel() { Self.dismissColorPanel() }
 
     // MARK: - Image helpers
+
+    /// Place a small red "update available" dot to the **right** of
+    /// the glyph (not on top of it), in the upper portion of the
+    /// status-item area so it sits visually above where the label
+    /// text appears.
+    private static func overlayUpdateDot(on base: NSImage) -> NSImage {
+        let glyphSize = base.size == .zero ? NSSize(width: 18, height: 18) : base.size
+        let dotDiameter: CGFloat = 7
+        let gap: CGFloat = 3
+        let canvas = NSSize(width: glyphSize.width + gap + dotDiameter,
+                            height: glyphSize.height)
+        let composed = NSImage(size: canvas)
+        composed.lockFocus()
+        defer { composed.unlockFocus() }
+        // Glyph on the left, vertically centred.
+        base.draw(in: NSRect(origin: .zero, size: glyphSize),
+                  from: .zero, operation: .sourceOver, fraction: 1.0)
+        // Dot to the right of the glyph, top-aligned so it floats
+        // above where the label text would sit.
+        let dot = NSRect(x: glyphSize.width + gap,
+                         y: canvas.height - dotDiameter - 1,
+                         width: dotDiameter, height: dotDiameter)
+        NSColor.systemRed.setFill()
+        NSBezierPath(ovalIn: dot).fill()
+        return composed
+    }
 
     /// Render the rounded coloured badge with the white DockGlyph in
     /// the centre — same look as the dock icon, just at menu-bar size.

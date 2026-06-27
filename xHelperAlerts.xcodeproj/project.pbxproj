@@ -14,9 +14,22 @@
 		345337D72FEDF67000B2A34D /* xHelperAlerts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = xHelperAlerts.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		345338342FEF683400B2A34D /* Exceptions for "xHelperAlerts" folder in "xHelperAlerts" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 345337D62FEDF67000B2A34D /* xHelperAlerts */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		345337D92FEDF67000B2A34D /* xHelperAlerts */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				345338342FEF683400B2A34D /* Exceptions for "xHelperAlerts" folder in "xHelperAlerts" target */,
+			);
 			path = xHelperAlerts;
 			sourceTree = "<group>";
 		};
@@ -269,9 +282,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = xHelperAlerts/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_SUFeedURL = "https://xhelperalerts.threeluckystars.com/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "BK38DP6rCEJm71a/7cVadmW+gS0+NDRr2IrBV8GYwRs=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -305,9 +317,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = xHelperAlerts/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_SUFeedURL = "https://xhelperalerts.threeluckystars.com/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "BK38DP6rCEJm71a/7cVadmW+gS0+NDRr2IrBV8GYwRs=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

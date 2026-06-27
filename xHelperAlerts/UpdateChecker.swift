@@ -26,21 +26,27 @@ final class UpdateChecker: NSObject, ObservableObject, SPUUpdaterDelegate, SPUSt
             updaterDelegate: self,
             userDriverDelegate: self
         )
+        // Force an in-background check ~8s after launch so users see
+        // an available update on launch rather than waiting Sparkle's
+        // default 24-hour scheduler.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            self?.updaterController.updater.checkForUpdatesInBackground()
+        }
     }
 
-    /// Trigger an immediate user-visible check — shows Sparkle's
-    /// "Checking…" sheet, then the update dialog or "you're up to
-    /// date" message.
+    /// Triggers Sparkle's native install dialog. If an update is
+    /// already pending it shows "Install Update" immediately; if not,
+    /// it shows the "Checking…" sheet then either the install dialog
+    /// or "you're up to date" message.
     func checkForUpdates() {
         updaterController.checkForUpdates(nil)
     }
 
-    /// Kept for API compat with the old in-house checker. Sparkle's
-    /// own UI handles downloading + install; this just opens the
-    /// release page in the browser as a fallback.
+    /// Same as `checkForUpdates` — kept for API compatibility with the
+    /// old in-house checker. Buttons in the popover/About now trigger
+    /// Sparkle's native install flow rather than opening the browser.
     func openDownloadPage() {
-        let url = URL(string: "https://github.com/sarahnashdev/xHelperAlerts/releases/latest")!
-        NSWorkspace.shared.open(url)
+        checkForUpdates()
     }
 
     // MARK: - SPUUpdaterDelegate
