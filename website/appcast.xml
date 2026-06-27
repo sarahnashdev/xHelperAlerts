@@ -82,5 +82,20 @@
         length="3934062"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.5</title>
+      <description><![CDATA[
+        <p>Display version was stuck at 1.0.1 in v1.0.2-1.0.4 due to a tooling bug. This release shows the correct version everywhere.</p>
+      ]]></description>
+      <pubDate>Sat, 27 Jun 2026 05:15:47 +0000</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.5/xHelperAlerts-1.0.5.dmg"
+        sparkle:edSignature="8K3xnpuJ0EA7XF++au69KmKFptbyjzcscIZaz0N4+F2u+eTw/nnjDhxqcsZyHvPjvtj6TI299ZqTiqT3fMGaDA=="
+        length="3934082"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
