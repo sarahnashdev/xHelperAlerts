@@ -1,24 +1,17 @@
 /**
  * xHelperAlerts download proxy Worker
  *
- * Deploy this to Cloudflare Workers in the matthewknops account, then
- * bind it to threeluckystars.com/download/* via a route. Every request
- * gets logged with country / city / colo / referrer / UA, then
- * redirected to the latest GitHub Releases DMG.
+ * Dynamically resolves the latest DMG from GitHub's API and 302s to
+ * it. No hard-coded versions — every new release "just works" the
+ * moment its release is published.
  *
- * Logs show up in Cloudflare dashboard → Workers → this worker →
- * Real-Time Logs (or via `wrangler tail xhelperalerts-download`).
- *
- * For historical analytics, optionally bind a Workers Analytics Engine
- * dataset and uncomment the writeDataPoint call.
+ * Logs every download with country / city / colo / referrer / UA to
+ * Cloudflare's Workers logs.
  */
 export default {
   async fetch(request, env, ctx) {
     const cf = request.cf || {};
-    const ua = request.headers.get('user-agent') || '';
-    const referrer = request.headers.get('referer') || '';
 
-    // Structured log — viewable in CF Workers Logs / Real-Time Logs.
     console.log(JSON.stringify({
       event: 'download',
       country: cf.country,
@@ -27,25 +20,35 @@ export default {
       colo: cf.colo,
       asn: cf.asn,
       asOrganization: cf.asOrganization,
-      referrer,
-      userAgent: ua,
+      referrer: request.headers.get('referer') || '',
+      userAgent: request.headers.get('user-agent') || '',
       timestamp: new Date().toISOString(),
     }));
 
-    // OPTIONAL: write to Workers Analytics Engine for queryable history.
-    // To enable: in Cloudflare dashboard, add an Analytics Engine
-    // binding to this worker named `DOWNLOADS_AE`, then uncomment.
-    //
-    // if (env.DOWNLOADS_AE) {
-    //   env.DOWNLOADS_AE.writeDataPoint({
-    //     blobs: [cf.country, cf.city, cf.colo, ua, referrer],
-    //     indexes: [cf.country || 'unknown'],
-    //   });
-    // }
+    // Look up the latest release on GitHub and grab the DMG asset.
+    // Cached for 60 s at the edge so we don't hammer the API.
+    const apiResp = await fetch(
+      'https://api.github.com/repos/sarahnashdev/xHelperAlerts/releases/latest',
+      {
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'User-Agent': 'xHelperAlerts-download-worker',
+        },
+        cf: { cacheTtl: 60, cacheEverything: true },
+      }
+    );
 
-    // Redirect to GitHub Releases — `latest/download/<filename>` always
-    // resolves to the most recent release, so this URL stays evergreen.
-    const target = 'https://github.com/sarahnashdev/xHelperAlerts/releases/latest/download/xHelperAlerts-1.0.1.dmg';
+    let target = 'https://github.com/sarahnashdev/xHelperAlerts/releases/latest';
+    if (apiResp.ok) {
+      const release = await apiResp.json();
+      const dmg = (release.assets || []).find(
+        (a) => typeof a.name === 'string' && a.name.toLowerCase().endsWith('.dmg')
+      );
+      if (dmg && dmg.browser_download_url) {
+        target = dmg.browser_download_url;
+      }
+    }
+
     return Response.redirect(target, 302);
   },
 };
