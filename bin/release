@@ -65,16 +65,20 @@ xcodebuild -exportArchive \
   -exportPath "/tmp/xHelperAlerts-export-$VERSION" \
   -exportOptionsPlist /tmp/exportOptions.plist \
   | tail -5
-cp -R "/tmp/xHelperAlerts-export-$VERSION/xHelperAlerts.app" "$APP"
-
-echo "→ Build DMG"
-STAGE=/tmp/dmg-stage-$VERSION
-rm -rf "$STAGE"
-mkdir "$STAGE"
-cp -R "$APP" "$STAGE/"
-ln -s /Applications "$STAGE/Applications"
+echo "→ Build DMG with branded layout"
+SRC_APP="/tmp/xHelperAlerts-export-$VERSION/xHelperAlerts.app"
+xattr -cr "$SRC_APP"
 rm -f "$DMG"
-hdiutil create -volname "xHelperAlerts" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
+create-dmg \
+  --volname "xHelperAlerts" \
+  --background "$REPO_ROOT/website/dmg-assets/dmg-background.png" \
+  --window-pos 200 200 \
+  --window-size 540 380 \
+  --icon-size 96 \
+  --icon "xHelperAlerts.app" 150 230 \
+  --app-drop-link 400 230 \
+  --no-internet-enable \
+  "$DMG" "$SRC_APP" >/dev/null 2>&1 || hdiutil create -volname "xHelperAlerts" -srcfolder "$SRC_APP" -ov -format UDZO "$DMG" >/dev/null
 
 echo "→ Sign and notarize DMG"
 codesign --sign "Developer ID Application: Matthew Knops (JRN58UQS4A)" --timestamp "$DMG"
