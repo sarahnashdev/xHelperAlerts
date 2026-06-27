@@ -78,7 +78,14 @@ enum MoveToApplications {
         try? xattr.run()
         xattr.waitUntilExit()
 
-        // Launch the installed copy, eject the DMG, then quit.
+        // We can't detach the DMG while we're still running from it —
+        // macOS rejects the unmount with "resource busy". So:
+        //   1. Spawn a detached bash script that waits for our PID
+        //      to disappear, then calls `hdiutil detach`.
+        //   2. Launch the installed copy from /Applications.
+        //   3. Terminate ourselves — which unblocks the detach script.
+        scheduleEject(of: mountRoot, after: ProcessInfo.processInfo.processIdentifier)
+
         let cfg = NSWorkspace.OpenConfiguration()
         cfg.activates = true
         cfg.createsNewApplicationInstance = true
@@ -87,16 +94,33 @@ enum MoveToApplications {
             configuration: cfg
         ) { _, _ in
             DispatchQueue.main.async {
-                ejectVolume(at: mountRoot)
                 NSApp.terminate(nil)
             }
         }
     }
 
-    private static func ejectVolume(at mountRoot: String) {
+    /// Spawn a child bash process that survives our termination,
+    /// waits for our PID to die, then ejects the disk image. macOS
+    /// won't auto-kill the child when we exit — it gets reparented
+    /// to launchd and finishes its job.
+    private static func scheduleEject(of mountRoot: String, after pid: Int32) {
+        let script = """
+        # Wait up to 30 s for the parent app to terminate.
+        for i in {1..60}; do
+          if ! kill -0 \(pid) 2>/dev/null; then break; fi
+          sleep 0.5
+        done
+        # Small buffer so file handles fully release.
+        sleep 1
+        /usr/bin/hdiutil detach '\(mountRoot)' -force -quiet
+        """
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
-        task.arguments = ["detach", mountRoot, "-quiet", "-force"]
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = ["-c", script]
+        // Detach stdio so the child has no dependency on us.
+        task.standardInput = FileHandle.nullDevice
+        task.standardOutput = FileHandle.nullDevice
+        task.standardError = FileHandle.nullDevice
         try? task.run()
     }
 
