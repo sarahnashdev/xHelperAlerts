@@ -97,5 +97,20 @@
         length="3934082"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.6</title>
+      <description><![CDATA[
+        <p>Banners now show even when xHelperAlerts is the active app.</p>
+      ]]></description>
+      <pubDate>Sat, 27 Jun 2026 05:39:42 +0000</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.6/xHelperAlerts-1.0.6.dmg"
+        sparkle:edSignature="VQsY3FB/3KQeRS3Oh1eY1P7WLvlbj9tcROz9AaeSGuEwOddALmgBji6DYI7IBCqMZjt1r+ubs7OAK52alaEgBQ=="
+        length="3934948"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
