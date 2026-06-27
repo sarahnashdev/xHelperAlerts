@@ -127,5 +127,20 @@
         length="3938502"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.8</title>
+      <description><![CDATA[
+        <p>Banner clicks now bring Xcode/iTerm/Terminal forward instead of opening xHelperAlerts settings. No more chiming on tools Claude auto-runs — you're only alerted when Claude actually needs you.</p>
+      ]]></description>
+      <pubDate>Sat, 27 Jun 2026 19:34:08 +0000</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>1.0.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.8/xHelperAlerts-1.0.8.dmg"
+        sparkle:edSignature="+5tMBv2DoKdYZCa4m+NGQOmR7bnjf8SDG6H+vTNcjDFjFj3Hj1dc+FzIyxr9+CN02GtYLVoDlc+Bo7H3Gnj3BA=="
+        length="4362468"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
