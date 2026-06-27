@@ -33,6 +33,12 @@ APP="$HOME/Desktop/xHelperAlerts.app"
 echo "→ Bump version to $VERSION"
 cd "$REPO_ROOT"
 xcrun agvtool new-marketing-version "$VERSION" >/dev/null
+# Bump build number too — Sparkle compares CFBundleVersion against
+# <sparkle:version> in the appcast, so they need to match each release.
+CURRENT_BUILD=$(xcrun agvtool what-version -terse | tr -d '[:space:]')
+NEXT_BUILD=$((CURRENT_BUILD + 1))
+xcrun agvtool new-version -all "$NEXT_BUILD" >/dev/null
+echo "  build: $CURRENT_BUILD → $NEXT_BUILD"
 
 echo "→ Archive (requires Xcode signing identity to be valid)"
 xcodebuild archive \
@@ -90,7 +96,7 @@ ITEM_XML="    <item>
         <p>$NOTES</p>
       ]]></description>
       <pubDate>$PUB_DATE</pubDate>
-      <sparkle:version>$VERSION</sparkle:version>
+      <sparkle:version>$NEXT_BUILD</sparkle:version>
       <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
