@@ -12,7 +12,7 @@
         <p>One-click in-app updates via Sparkle. Bug fixes and polish.</p>
       ]]></description>
       <pubDate>Fri, 27 Jun 2026 02:50:00 +0000</pubDate>
-      <sparkle:version>1.0.1</sparkle:version>
+      <sparkle:version>1</sparkle:version>
       <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
