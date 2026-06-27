@@ -52,5 +52,20 @@
         length="3921894"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.3</title>
+      <description><![CDATA[
+        <p>DMG now auto-ejects reliably after you move xHelperAlerts to Applications.</p>
+      ]]></description>
+      <pubDate>Sat, 27 Jun 2026 04:36:06 +0000</pubDate>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.3/xHelperAlerts-1.0.3.dmg"
+        sparkle:edSignature="87dv0nzJpaT18ki6ovpo2OfPmFY6/SZ2XbB8Dt7Go8cckoq8ABrSl2zkuG3l4jY4XNFlWMQ/LXYG5V+xpdmSCA=="
+        length="3922807"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
