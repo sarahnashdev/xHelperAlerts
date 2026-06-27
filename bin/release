@@ -1,0 +1,123 @@
+#!/bin/bash
+#
+# Usage: ./bin/release 1.0.1
+#
+# Builds a new release end-to-end:
+#   1. Bumps MARKETING_VERSION in the project to the given version.
+#   2. Archives the app with xcodebuild.
+#   3. Exports the .app, signs + notarizes the DMG with the keychain
+#      profile `xhelperalerts-notary`.
+#   4. Signs the DMG with the Sparkle EdDSA key.
+#   5. Adds a new <item> to website/appcast.xml.
+#   6. Commits + pushes the appcast update so Cloudflare Pages
+#      redeploys.
+#   7. Cuts a GitHub release with the DMG attached.
+#
+# Requires: gh (logged in), xcrun notarytool credentials, /tmp/bin/sign_update
+# (Sparkle's signing tool — re-download once if missing).
+
+set -euo pipefail
+
+if [ $# -lt 1 ]; then
+  echo "usage: $0 <version> [release-notes]"
+  echo "  e.g.  $0 1.0.1 'Fixed banner permission on macOS 26'"
+  exit 1
+fi
+
+VERSION="$1"
+NOTES="${2:-Release v$VERSION}"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DMG="$HOME/Desktop/xHelperAlerts-$VERSION.dmg"
+APP="$HOME/Desktop/xHelperAlerts.app"
+
+echo "→ Bump version to $VERSION"
+cd "$REPO_ROOT"
+xcrun agvtool new-marketing-version "$VERSION" >/dev/null
+
+echo "→ Archive (requires Xcode signing identity to be valid)"
+xcodebuild archive \
+  -project "xHelperAlerts.xcodeproj" \
+  -scheme "xHelperAlerts" \
+  -configuration Release \
+  -archivePath "/tmp/xHelperAlerts-$VERSION.xcarchive" \
+  -destination "generic/platform=macOS" \
+  | tail -5
+
+echo "→ Export notarized .app"
+cat > /tmp/exportOptions.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>method</key><string>developer-id</string>
+  <key>signingStyle</key><string>automatic</string>
+  <key>teamID</key><string>JRN58UQS4A</string>
+  <key>destination</key><string>export</string>
+</dict></plist>
+EOF
+xcodebuild -exportArchive \
+  -archivePath "/tmp/xHelperAlerts-$VERSION.xcarchive" \
+  -exportPath "/tmp/xHelperAlerts-export-$VERSION" \
+  -exportOptionsPlist /tmp/exportOptions.plist \
+  | tail -5
+cp -R "/tmp/xHelperAlerts-export-$VERSION/xHelperAlerts.app" "$APP"
+
+echo "→ Build DMG"
+STAGE=/tmp/dmg-stage-$VERSION
+rm -rf "$STAGE"
+mkdir "$STAGE"
+cp -R "$APP" "$STAGE/"
+ln -s /Applications "$STAGE/Applications"
+rm -f "$DMG"
+hdiutil create -volname "xHelperAlerts" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
+
+echo "→ Sign and notarize DMG"
+codesign --sign "Developer ID Application: Matthew Knops (JRN58UQS4A)" --timestamp "$DMG"
+xcrun notarytool submit "$DMG" --keychain-profile xhelperalerts-notary --wait | tail -3
+xcrun stapler staple "$DMG" >/dev/null
+
+echo "→ Sparkle sign"
+SPARKLE_OUT=$(/tmp/bin/sign_update "$DMG")
+SPARKLE_SIG=$(echo "$SPARKLE_OUT" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
+SPARKLE_LEN=$(stat -f%z "$DMG")
+echo "  signature: $SPARKLE_SIG"
+echo "  length:    $SPARKLE_LEN"
+
+echo "→ Update appcast.xml"
+PUB_DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
+ITEM_XML="    <item>
+      <title>Version $VERSION</title>
+      <description><![CDATA[
+        <p>$NOTES</p>
+      ]]></description>
+      <pubDate>$PUB_DATE</pubDate>
+      <sparkle:version>$VERSION</sparkle:version>
+      <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url=\"https://github.com/sarahnashdev/xHelperAlerts/releases/download/v$VERSION/xHelperAlerts-$VERSION.dmg\"
+        sparkle:edSignature=\"$SPARKLE_SIG\"
+        length=\"$SPARKLE_LEN\"
+        type=\"application/octet-stream\" />
+    </item>"
+# Insert above the closing </channel> tag.
+python3 - <<PY
+path = "$REPO_ROOT/website/appcast.xml"
+with open(path) as f: xml = f.read()
+new_item = """$ITEM_XML
+"""
+xml = xml.replace("</channel>", new_item + "  </channel>")
+with open(path, "w") as f: f.write(xml)
+PY
+
+echo "→ Commit + push appcast (triggers Cloudflare Pages redeploy)"
+git add website/appcast.xml
+git commit -m "Release v$VERSION"
+git push
+
+echo "→ Cut GitHub release"
+gh release create "v$VERSION" "$DMG" --title "v$VERSION" --notes "$NOTES"
+
+echo
+echo "✓ v$VERSION shipped."
+echo "  GitHub:  https://github.com/sarahnashdev/xHelperAlerts/releases/tag/v$VERSION"
+echo "  Appcast: https://xhelperalerts.threeluckystars.com/appcast.xml"

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+  <channel>
+    <title>xHelperAlerts</title>
+    <link>https://xhelperalerts.threeluckystars.com/appcast.xml</link>
+    <description>xHelperAlerts updates</description>
+    <language>en</language>
+
+    <item>
+      <title>Version 1.0.1 (test)</title>
+      <description><![CDATA[
+        <p>Test entry to verify the Sparkle install flow. Same DMG as 1.0.0.</p>
+      ]]></description>
+      <pubDate>Thu, 26 Jun 2026 20:30:00 +0000</pubDate>
+      <sparkle:version>1.0.1</sparkle:version>
+      <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.1/xHelperAlerts-1.0.0.dmg"
+        sparkle:edSignature="PVfDvEW3KWvmuIM7c0nWqROZ4Hn0dd+nuQ8kaOV3GmgfsYX1+xV5Xs0DHXk4EAlftqJ2XizDC+3E0vq7eDupDw=="
+        length="3281803"
+        type="application/octet-stream" />
+    </item>
+
+    <item>
+      <title>Version 1.0.0</title>
+      <description><![CDATA[
+        <p>Initial release. Menu-bar alerts for Claude in Xcode.</p>
+      ]]></description>
+      <pubDate>Thu, 26 Jun 2026 20:00:00 +0000</pubDate>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.0/xHelperAlerts-1.0.0.dmg"
+        sparkle:edSignature="PVfDvEW3KWvmuIM7c0nWqROZ4Hn0dd+nuQ8kaOV3GmgfsYX1+xV5Xs0DHXk4EAlftqJ2XizDC+3E0vq7eDupDw=="
+        length="3281803"
+        type="application/octet-stream" />
+    </item>
+  </channel>
+</rss>
