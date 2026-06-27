@@ -72,6 +72,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
 
+        // First-launch DMG check — if the user launched us straight
+        // from the disk image, prompt to install + auto-eject. Returns
+        // immediately when the app is already in /Applications.
+        MoveToApplications.promptIfRunningFromDMG()
+
         installStatusItem()
         installPopover()
         subscribeToStateChanges()
