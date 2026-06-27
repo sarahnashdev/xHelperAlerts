@@ -32,13 +32,14 @@ APP="$HOME/Desktop/xHelperAlerts.app"
 
 echo "→ Bump version to $VERSION"
 cd "$REPO_ROOT"
-xcrun agvtool new-marketing-version "$VERSION" >/dev/null
-# Bump build number too — Sparkle compares CFBundleVersion against
-# <sparkle:version> in the appcast, so they need to match each release.
-CURRENT_BUILD=$(xcrun agvtool what-version -terse | tr -d '[:space:]')
+# `agvtool new-marketing-version` silently no-ops when a manual
+# Info.plist exists, so write MARKETING_VERSION straight into the
+# pbxproj via sed.
+/usr/bin/sed -i '' -E "s/(MARKETING_VERSION =) [^;]+;/\1 $VERSION;/g" xHelperAlerts.xcodeproj/project.pbxproj
+CURRENT_BUILD=$(/usr/bin/sed -n -E 's/.*CURRENT_PROJECT_VERSION = ([0-9]+);.*/\1/p' xHelperAlerts.xcodeproj/project.pbxproj | head -1)
 NEXT_BUILD=$((CURRENT_BUILD + 1))
-xcrun agvtool new-version -all "$NEXT_BUILD" >/dev/null
-echo "  build: $CURRENT_BUILD → $NEXT_BUILD"
+/usr/bin/sed -i '' -E "s/(CURRENT_PROJECT_VERSION =) [0-9]+;/\1 $NEXT_BUILD;/g" xHelperAlerts.xcodeproj/project.pbxproj
+echo "  marketing: $VERSION   build: $CURRENT_BUILD → $NEXT_BUILD"
 
 echo "→ Archive (requires Xcode signing identity to be valid)"
 xcodebuild archive \
