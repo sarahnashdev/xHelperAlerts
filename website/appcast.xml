@@ -142,5 +142,20 @@
         length="4362468"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.9</title>
+      <description><![CDATA[
+        <p>New: 'Remind me until I click the banner' option (General → Notifications) re-alerts at a custom interval until you acknowledge. Alert sound is now played by the app for consistent tones and ring-back support.</p>
+      ]]></description>
+      <pubDate>Sat, 27 Jun 2026 23:36:29 +0000</pubDate>
+      <sparkle:version>9</sparkle:version>
+      <sparkle:shortVersionString>1.0.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.9/xHelperAlerts-1.0.9.dmg"
+        sparkle:edSignature="oAlZ9kyP8qkHBZT0gneaIWhuOx6Db5fDtWMRDJV2eN/GXrt5mdVuW3AzLoHTyo8kACtIL6SGUzqwzB3VxqQXDg=="
+        length="3959967"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
