@@ -10,7 +10,7 @@ import UserNotifications
 /// File format: each line is `<title>\t<body>`. We consume each line
 /// once by truncating the file after reading.
 @MainActor
-final class BannerWatcher {
+final class BannerWatcher: NSObject, UNUserNotificationCenterDelegate {
 
     static let shared = BannerWatcher()
 
@@ -30,9 +30,24 @@ final class BannerWatcher {
         if !FileManager.default.fileExists(atPath: url.path) {
             try? "".write(to: url, atomically: true, encoding: .utf8)
         }
-        // Ask for permission once, up front, so banners just work.
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge]) { _, _ in }
+        // Become the notification center delegate so we can force the
+        // banner to display even when xHelperAlerts is the foreground
+        // app (default UNUserNotificationCenter behaviour suppresses
+        // banners while the owning app is active).
+        UNUserNotificationCenter.current().delegate = self
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
         attachWatcher()
+    }
+
+    /// Tell macOS to show banners + play sound even when our app is
+    /// frontmost. Without this, foreground notifications fall straight
+    /// to Notification Center with no UI.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
 
     private func attachWatcher() {

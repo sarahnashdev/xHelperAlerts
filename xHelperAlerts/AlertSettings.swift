@@ -161,18 +161,19 @@ final class AlertSettings: ObservableObject {
     /// requested on first call; if the user later turns the app off in
     /// System Settings → Notifications, the request silently no-ops.
     private static func postBanner(title: String, body: String) {
-        let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert, .badge]) { granted, _ in
-            guard granted else { return }
-            let content = UNMutableNotificationContent()
-            content.title = title
-            content.body = body
-            let req = UNNotificationRequest(
-                identifier: UUID().uuidString,
-                content: content,
-                trigger: nil  // fire immediately
-            )
-            center.add(req, withCompletionHandler: nil)
+        // Route through BannerWatcher's file pipeline — it's the
+        // delegate that forces foreground banners to show, and going
+        // through the file keeps a single code path.
+        let req = "\(title)\t\(body)\n"
+        let url = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".xhelper-alerts/banner-request")
+        if let data = req.data(using: .utf8),
+           let handle = try? FileHandle(forWritingTo: url) {
+            try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+            try? handle.close()
+        } else {
+            try? req.write(to: url, atomically: true, encoding: .utf8)
         }
     }
 
