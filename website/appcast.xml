@@ -157,5 +157,20 @@
         length="3959967"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.10</title>
+      <description><![CDATA[
+        <p>New 'Alert on every tool Claude runs' setting (General → Notifications) — reliable alerts during Xcode sessions, where Claude doesn't fire a 'waiting' event. Alert sound is played by the app for consistent tones and ring-back support.</p>
+      ]]></description>
+      <pubDate>Sun, 28 Jun 2026 06:25:29 +0000</pubDate>
+      <sparkle:version>10</sparkle:version>
+      <sparkle:shortVersionString>1.0.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.10/xHelperAlerts-1.0.10.dmg"
+        sparkle:edSignature="ZH/u2gaVPz+xe9GUHm1vNa6zZHr9Itav65/0T8FHUFugTdHqRXvUJxwD5zBNn7upXc0Jlq+/kdTCke7LcYgUDw=="
+        length="3962140"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
