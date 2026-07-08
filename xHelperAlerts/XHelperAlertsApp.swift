@@ -26,9 +26,22 @@ struct XHelperAlertsApp: App {
 
     /// SwiftUI requires at least one Scene. We use the standard
     /// `Settings` scene with an empty view — it's a no-op container
-    /// that doesn't show automatically.
+    /// that doesn't show automatically. We replace the default
+    /// Settings menu item so Cmd+, and "xHelperAlerts → Settings…"
+    /// route to AppDelegate's real tabbed window instead of opening
+    /// an empty SwiftUI Settings window.
     var body: some Scene {
         Settings { EmptyView() }
+            .commands {
+                CommandGroup(replacing: .appSettings) {
+                    Button("Settings…") {
+                        NotificationCenter.default.post(
+                            name: .xhelperShowSettings, object: nil
+                        )
+                    }
+                    .keyboardShortcut(",", modifiers: .command)
+                }
+            }
     }
 }
 
@@ -101,6 +114,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func handleShowSettings() { showSettingsWindow() }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        // If this reopen was triggered by tapping a notification banner, the
+        // BannerWatcher already handled it by focusing the Claude host app —
+        // don't ALSO pop the Settings window and steal focus back.
+        if let clicked = BannerWatcher.lastBannerClickAt,
+           Date().timeIntervalSince(clicked) < 2.0 {
+            return true
+        }
         showSettingsWindow()
         return true
     }

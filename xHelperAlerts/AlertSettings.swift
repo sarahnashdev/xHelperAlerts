@@ -23,6 +23,15 @@ final class AlertSettings: ObservableObject {
     @Published var showAccountLabelInMenuBar: Bool { didSet { save() } }
     /// Which form of the account name to render in the menu bar.
     @Published var accountLabelMode: AccountLabelMode { didSet { save() } }
+    /// Keep re-alerting (sound + banner) at a fixed interval until the
+    /// user clicks the banner. Off = single alert, the default.
+    @Published var ringBackEnabled: Bool       { didSet { save() } }
+    /// Minutes between ring-back reminders when `ringBackEnabled` is on.
+    @Published var ringBackMinutes: Int        { didSet { save() } }
+    /// Alert on every tool Claude runs (each Bash/Edit/Write), not just on
+    /// Claude's explicit "waiting for you" event. Essential for Xcode, where
+    /// Claude doesn't reliably fire that waiting event. On = more frequent.
+    @Published var alertOnEveryTool: Bool      { didSet { save() } }
 
     init() {
         let loaded = Self.load()
@@ -34,6 +43,9 @@ final class AlertSettings: ObservableObject {
         self.soundName                  = loaded.soundName
         self.showAccountLabelInMenuBar  = loaded.showAccountLabelInMenuBar
         self.accountLabelMode           = loaded.accountLabelMode
+        self.ringBackEnabled            = loaded.ringBackEnabled
+        self.ringBackMinutes            = loaded.ringBackMinutes
+        self.alertOnEveryTool           = loaded.alertOnEveryTool
     }
 
     /// When the user turns off both Sound and Banner, the master
@@ -70,7 +82,12 @@ final class AlertSettings: ObservableObject {
         var sound_name: String?
         var show_account_label_in_menu_bar: Bool?
         var account_label_mode: String?
+        var ring_back_enabled: Bool?
+        var ring_back_minutes: Int?
+        var alert_on_every_tool: Bool?
     }
+
+    static let defaultRingBackMinutes = 5
 
     static let defaultSoundName = "Hero"
 
@@ -83,6 +100,9 @@ final class AlertSettings: ObservableObject {
         var soundName: String
         var showAccountLabelInMenuBar: Bool
         var accountLabelMode: AccountLabelMode
+        var ringBackEnabled: Bool
+        var ringBackMinutes: Int
+        var alertOnEveryTool: Bool
     }
 
     private static func load() -> Loaded {
@@ -95,7 +115,10 @@ final class AlertSettings: ObservableObject {
                 autoApproveEnabled: false, notifyOnAutoApprove: false,
                 soundName: defaultSoundName,
                 showAccountLabelInMenuBar: true,
-                accountLabelMode: .customLabel
+                accountLabelMode: .customLabel,
+                ringBackEnabled: false,
+                ringBackMinutes: defaultRingBackMinutes,
+                alertOnEveryTool: false
             )
         }
         return Loaded(
@@ -106,7 +129,10 @@ final class AlertSettings: ObservableObject {
             notifyOnAutoApprove:       decoded.notify_on_auto_approve ?? false,
             soundName:                 decoded.sound_name ?? defaultSoundName,
             showAccountLabelInMenuBar: decoded.show_account_label_in_menu_bar ?? true,
-            accountLabelMode:          AccountLabelMode(rawValue: decoded.account_label_mode ?? "") ?? .customLabel
+            accountLabelMode:          AccountLabelMode(rawValue: decoded.account_label_mode ?? "") ?? .customLabel,
+            ringBackEnabled:           decoded.ring_back_enabled ?? false,
+            ringBackMinutes:           decoded.ring_back_minutes ?? defaultRingBackMinutes,
+            alertOnEveryTool:          decoded.alert_on_every_tool ?? false
         )
     }
 
@@ -119,7 +145,10 @@ final class AlertSettings: ObservableObject {
             notify_on_auto_approve:         notifyOnAutoApprove,
             sound_name:                     soundName,
             show_account_label_in_menu_bar: showAccountLabelInMenuBar,
-            account_label_mode:             accountLabelMode.rawValue
+            account_label_mode:             accountLabelMode.rawValue,
+            ring_back_enabled:              ringBackEnabled,
+            ring_back_minutes:              ringBackMinutes,
+            alert_on_every_tool:            alertOnEveryTool
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -147,13 +176,21 @@ final class AlertSettings: ObservableObject {
 
     // MARK: - Manual triggers
 
-    /// Single test action — fires whichever of {sound, banner} the user
-    /// has currently enabled. If neither is on (or notifications are
-    /// off altogether), does nothing.
+    /// Single test action — writes one alert request to the file pipeline.
+    /// BannerWatcher then applies the user's sound + banner preferences (and
+    /// arms ring-back if enabled), so the test exercises the exact same path
+    /// a real Claude notification does.
     func testNotifications() {
-        guard notificationsEnabled else { return }
-        if soundEnabled { Self.playSound(named: soundName) }
-        if bannerEnabled { Self.postBanner(title: "xHelperAlerts", body: "xHelperAlerts is listening") }
+        guard notificationsEnabled, soundEnabled || bannerEnabled else { return }
+        Self.postBanner(title: "xHelperAlerts", body: "xHelperAlerts is listening")
+    }
+
+    /// Play the user's configured alert tone, honoring the master + sound
+    /// toggles. Called by BannerWatcher when it shows a banner and on each
+    /// ring-back reminder, so there's a single source of alert sound.
+    func playConfiguredSoundIfEnabled() {
+        guard notificationsEnabled, soundEnabled else { return }
+        Self.playSound(named: soundName)
     }
 
     /// Posts a banner via the native UserNotifications framework — no

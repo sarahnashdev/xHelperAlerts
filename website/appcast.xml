@@ -172,5 +172,20 @@
         length="3962140"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.0.11</title>
+      <description><![CDATA[
+        <p>New 'Remind me until I click the banner' option (General → Notifications) — repeats the alert at your chosen interval until you acknowledge it by clicking the banner. The Test button now exercises the full alert pipeline, and ⌘, opens the real Settings window.</p>
+      ]]></description>
+      <pubDate>Wed, 08 Jul 2026 19:58:49 +0000</pubDate>
+      <sparkle:version>12</sparkle:version>
+      <sparkle:shortVersionString>1.0.11</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.0.11/xHelperAlerts-1.0.11.dmg"
+        sparkle:edSignature="CUVHsjNOxxCxCa2VtUaHg22crrelT7fAM0QuUAiXGhoKRbKB8K/jHtGqIGdv2aA/xg91GwebCAjLs+I+f4dDCg=="
+        length="3962259"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>

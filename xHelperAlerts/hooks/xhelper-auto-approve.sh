@@ -33,6 +33,7 @@ read_string() { /usr/bin/python3 -c "import json; d=json.load(open('$CONFIG')); 
 
 AUTO=$(read_flag auto_approve_enabled)
 NOTIFY_AUTO=$(read_flag notify_on_auto_approve)
+ALERT_EVERY=$(read_flag alert_on_every_tool)
 NOTIFICATIONS_ENABLED=$(/usr/bin/python3 -c "import json; d=json.load(open('$CONFIG')); print('true' if d.get('notifications_enabled', True) else 'false')" 2>/dev/null || echo "true")
 SOUND_ENABLED=$(read_flag sound_enabled)
 BANNER_ENABLED=$(read_flag banner_enabled)
@@ -48,10 +49,10 @@ play_sound() {
 
 post_banner() {
     [ "$NOTIFICATIONS_ENABLED" = "true" ] || return 0
-    [ "$BANNER_ENABLED" = "true" ] || return 0
     local message="${1:-Claude ran a tool}"
-    # Hand the banner off to the Swift app via a file. Avoids
-    # `osascript -e "display notification"` (Script Editor on Tahoe).
+    # Hand the alert off to the Swift app via a file. The app applies the
+    # user's sound + banner preferences, so we don't gate on banner here.
+    # Avoids `osascript -e "display notification"` (Script Editor on Tahoe).
     local safe=$(printf '%s' "$message" | tr '\n\t' '  ')
     printf 'xHelperAlerts\t%s\n' "$safe" >> "$HOME/.xhelper-alerts/banner-request"
 }
@@ -116,7 +117,8 @@ PY
 if [ "$AUTO" = "true" ]; then
     write_log_entry "auto_approved"
     if [ "$NOTIFY_AUTO" = "true" ]; then
-        play_sound
+        # Don't play the tone here — post_banner hands off to the app, which
+        # plays the user's sound when it shows the banner (single source).
         post_banner "${TOOL_NAME:-tool} ${SNIPPET:0:60}"
     fi
     cat <<'JSON'
@@ -131,11 +133,20 @@ JSON
     exit 0
 fi
 
-# --- Manual path: chime + log "pending" for tools that commonly need approval ---
+# --- Manual path ---
+# By default we stay quiet here: PreToolUse fires on every tool call,
+# including ones Claude auto-runs, so chiming on all of them is noisy. The
+# real "Claude needs you" signal is the Notification event (xHelperAlerts.sh).
+#
+# BUT in Xcode, Claude doesn't reliably fire that Notification event, so the
+# user can opt into "alert on every tool" (alert_on_every_tool) to get a
+# sound/banner on each common tool — the only reliable Xcode signal.
 case "$TOOL_NAME" in
     Bash|Write|Edit|MultiEdit|NotebookEdit)
         write_log_entry "pending_user_decision"
-        play_sound
+        if [ "$ALERT_EVERY" = "true" ]; then
+            post_banner "Claude is running ${TOOL_NAME}${SNIPPET:+: ${SNIPPET:0:60}}"
+        fi
         ;;
     *)
         write_log_entry "no_chime"

@@ -102,6 +102,24 @@ private struct GeneralSettingsTab: View {
 
                     Toggle("Banner", isOn: $settings.bannerEnabled)
 
+                    Toggle("Alert on every tool Claude runs", isOn: $settings.alertOnEveryTool)
+                        .help("On: sound/banner on each Bash, Edit, or Write — recommended for Xcode, where Claude doesn't signal when it's waiting. Off: only alert when Claude is explicitly waiting for you.")
+                    Text(settings.alertOnEveryTool
+                         ? "Alerts on every file edit or command Claude runs (best for Xcode)."
+                         : "Only alerts when Claude is explicitly waiting for you (quieter; can miss Xcode prompts).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    if settings.bannerEnabled {
+                        Toggle("Remind me until I click the banner", isOn: $settings.ringBackEnabled)
+                            .help("Repeats the alert at the interval below until you click the banner to acknowledge it.")
+                        if settings.ringBackEnabled {
+                            Stepper(value: $settings.ringBackMinutes, in: 1...120) {
+                                Text("Remind every ^[\(settings.ringBackMinutes) minute](inflect: true)")
+                            }
+                        }
+                    }
+
                     HStack {
                         Button("Test notifications") {
                             settings.testNotifications()

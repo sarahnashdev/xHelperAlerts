@@ -30,21 +30,25 @@ enum IconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        // macOS-style squircle. Pure rounded-rect is close enough at
-        // dock sizes that the difference isn't visible.
-        let rect = NSRect(origin: .zero, size: size)
-        let cornerRadius: CGFloat = 220
-        let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
+        // macOS-style squircle. Apple's icon grid leaves transparent
+        // padding around the shape — the coloured squircle occupies the
+        // inner ~824 px of the 1024 canvas, NOT the full bleed. Without
+        // this margin the icon looks oversized next to system icons.
+        let canvas = NSRect(origin: .zero, size: size)
+        let iconMargin: CGFloat = 100
+        let squircle = canvas.insetBy(dx: iconMargin, dy: iconMargin)
+        let cornerRadius: CGFloat = 180
+        let path = NSBezierPath(roundedRect: squircle, xRadius: cornerRadius, yRadius: cornerRadius)
         path.addClip()
         tint.setFill()
         path.fill()
 
         if let glyph = NSImage(named: "DockGlyph") {
-            // Tight inset so the spark + stars fill the icon — small
-            // dock sizes still read fine because the glyph itself has
-            // built-in padding inside its 1024-px canvas.
-            let inset: CGFloat = 100
-            let glyphRect = rect.insetBy(dx: inset, dy: inset)
+            // Draw the glyph large inside the squircle (the shape itself is
+            // now correctly sized). A modest inset from the squircle edges
+            // keeps the spark + stars prominent without touching the corners.
+            let glyphInset: CGFloat = 70
+            let glyphRect = squircle.insetBy(dx: glyphInset, dy: glyphInset)
             glyph.draw(in: glyphRect,
                        from: .zero,
                        operation: .sourceOver,

@@ -20,10 +20,6 @@ read_string() { /usr/bin/python3 -c "import json; d=json.load(open('$CONFIG')); 
 NOTIFICATIONS_ENABLED=$(read_flag notifications_enabled)
 [ "$NOTIFICATIONS_ENABLED" = "false" ] && exit 0
 
-SOUND_ENABLED=$(read_flag sound_enabled)
-BANNER_ENABLED=$(read_flag banner_enabled)
-SOUND_NAME=$(read_string sound_name Hero)
-
 PAYLOAD="$(cat 2>/dev/null || true)"
 MESSAGE=$(printf '%s' "$PAYLOAD" | /usr/bin/python3 -c '
 import json, sys
@@ -35,18 +31,12 @@ except Exception:
 ' 2>/dev/null)
 MESSAGE=${MESSAGE:-"Claude needs your attention"}
 
-if [ "$SOUND_ENABLED" = "true" ]; then
-    SOUND_PATH="/System/Library/Sounds/$SOUND_NAME.aiff"
-    [ -f "$SOUND_PATH" ] || SOUND_PATH="/System/Library/Sounds/Hero.aiff"
-    ( /usr/bin/afplay "$SOUND_PATH" >/dev/null 2>&1 & disown 2>/dev/null )
-fi
-
-if [ "$BANNER_ENABLED" = "true" ]; then
-    # Hand the banner off to the Swift app via a file. Avoids
-    # `osascript -e "display notification"`, which on macOS Tahoe
-    # routes the request through Script Editor.
-    SAFE=$(printf '%s' "$MESSAGE" | tr '\n\t' '  ')
-    printf 'xHelperAlerts\t%s\n' "$SAFE" >> "$HOME/.xhelper-alerts/banner-request"
-fi
+# Hand the alert off to the Swift app via a file. The app applies the
+# user's sound + banner + ring-back preferences (read from config.json) —
+# we deliberately do NOT play the tone here, so the sound isn't doubled
+# and ring-back can replay it. Avoids `osascript -e "display notification"`,
+# which on macOS Tahoe routes through Script Editor.
+SAFE=$(printf '%s' "$MESSAGE" | tr '\n\t' '  ')
+printf 'xHelperAlerts\t%s\n' "$SAFE" >> "$HOME/.xhelper-alerts/banner-request"
 
 exit 0
