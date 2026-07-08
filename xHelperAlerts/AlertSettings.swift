@@ -32,6 +32,13 @@ final class AlertSettings: ObservableObject {
     /// Claude's explicit "waiting for you" event. Essential for Xcode, where
     /// Claude doesn't reliably fire that waiting event. On = more frequent.
     @Published var alertOnEveryTool: Bool      { didSet { save() } }
+    /// Poll the relay Worker for alerts pushed by Claude Code **cloud**
+    /// sessions (claude.ai/code). Requires the web hook to be installed
+    /// into each repo via Settings → General → Web alerts.
+    @Published var webAlertsEnabled: Bool      { didSet { save(); WebAlertPoller.shared.syncWithSettings() } }
+    /// Device token identifying this Mac to the relay. Empty until web
+    /// alerts are first enabled; generated lazily by `ensureWebAlertToken()`.
+    @Published var webAlertToken: String       { didSet { save() } }
 
     init() {
         let loaded = Self.load()
@@ -46,6 +53,22 @@ final class AlertSettings: ObservableObject {
         self.ringBackEnabled            = loaded.ringBackEnabled
         self.ringBackMinutes            = loaded.ringBackMinutes
         self.alertOnEveryTool           = loaded.alertOnEveryTool
+        self.webAlertsEnabled           = loaded.webAlertsEnabled
+        self.webAlertToken              = loaded.webAlertToken
+    }
+
+    /// Returns the device token, generating and persisting one on first use.
+    /// 32 random bytes, base64url — matches the relay's token grammar.
+    func ensureWebAlertToken() -> String {
+        if !webAlertToken.isEmpty { return webAlertToken }
+        var bytes = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        let token = Data(bytes).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        webAlertToken = token
+        return token
     }
 
     /// When the user turns off both Sound and Banner, the master
@@ -85,6 +108,8 @@ final class AlertSettings: ObservableObject {
         var ring_back_enabled: Bool?
         var ring_back_minutes: Int?
         var alert_on_every_tool: Bool?
+        var web_alerts_enabled: Bool?
+        var web_alert_token: String?
     }
 
     static let defaultRingBackMinutes = 5
@@ -103,6 +128,8 @@ final class AlertSettings: ObservableObject {
         var ringBackEnabled: Bool
         var ringBackMinutes: Int
         var alertOnEveryTool: Bool
+        var webAlertsEnabled: Bool
+        var webAlertToken: String
     }
 
     private static func load() -> Loaded {
@@ -118,7 +145,9 @@ final class AlertSettings: ObservableObject {
                 accountLabelMode: .customLabel,
                 ringBackEnabled: false,
                 ringBackMinutes: defaultRingBackMinutes,
-                alertOnEveryTool: false
+                alertOnEveryTool: false,
+                webAlertsEnabled: false,
+                webAlertToken: ""
             )
         }
         return Loaded(
@@ -132,7 +161,9 @@ final class AlertSettings: ObservableObject {
             accountLabelMode:          AccountLabelMode(rawValue: decoded.account_label_mode ?? "") ?? .customLabel,
             ringBackEnabled:           decoded.ring_back_enabled ?? false,
             ringBackMinutes:           decoded.ring_back_minutes ?? defaultRingBackMinutes,
-            alertOnEveryTool:          decoded.alert_on_every_tool ?? false
+            alertOnEveryTool:          decoded.alert_on_every_tool ?? false,
+            webAlertsEnabled:          decoded.web_alerts_enabled ?? false,
+            webAlertToken:             decoded.web_alert_token ?? ""
         )
     }
 
@@ -148,7 +179,9 @@ final class AlertSettings: ObservableObject {
             account_label_mode:             accountLabelMode.rawValue,
             ring_back_enabled:              ringBackEnabled,
             ring_back_minutes:              ringBackMinutes,
-            alert_on_every_tool:            alertOnEveryTool
+            alert_on_every_tool:            alertOnEveryTool,
+            web_alerts_enabled:             webAlertsEnabled,
+            web_alert_token:                webAlertToken
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

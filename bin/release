@@ -87,7 +87,11 @@ xcrun notarytool submit "$DMG" --keychain-profile xhelperalerts-notary --wait | 
 xcrun stapler staple "$DMG" >/dev/null
 
 echo "→ Sparkle sign"
-SPARKLE_OUT=$(/tmp/bin/sign_update "$DMG")
+# Prefer the copy that ships with the Sparkle SPM artifact (survives
+# reboots, unlike /tmp/bin); fall back to /tmp/bin if present.
+SIGN_UPDATE=$(ls "$HOME"/Library/Developer/Xcode/DerivedData/xHelperAlerts-*/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update 2>/dev/null | head -1)
+SIGN_UPDATE="${SIGN_UPDATE:-/tmp/bin/sign_update}"
+SPARKLE_OUT=$("$SIGN_UPDATE" "$DMG")
 SPARKLE_SIG=$(echo "$SPARKLE_OUT" | grep -o 'sparkle:edSignature="[^"]*"' | cut -d'"' -f2)
 SPARKLE_LEN=$(stat -f%z "$DMG")
 echo "  signature: $SPARKLE_SIG"

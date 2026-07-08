@@ -94,6 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         installPopover()
         subscribeToStateChanges()
         BannerWatcher.shared.start()
+        WebAlertPoller.shared.start()
         refreshStatusItem()
         IconRenderer.apply(activeColor: state.accounts.active?.glyphColor)
 

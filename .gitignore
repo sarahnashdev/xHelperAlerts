@@ -31,3 +31,6 @@ Package.resolved
 
 # Misc
 *.log
+
+# wrangler local cache
+relay/.wrangler/

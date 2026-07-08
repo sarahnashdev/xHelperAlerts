@@ -11,6 +11,7 @@ Menu-bar alerts for Claude in Xcode. Pings you the moment Claude Code needs your
 - **Master notifications switch** with separate Sound and Banner sub-toggles. One **Test** button fires whatever you have enabled.
 - **Command log** of every Claude tool call with sortable columns and decision (Auto / Asked / Silent).
 - **First-run installer** wires hooks into both `~/.claude/settings.json` (CLI) and Xcode's Coding Assistant settings — idempotent.
+- **Web alerts** — get pinged by Claude Code **cloud** sessions (claude.ai/code) too: a relay Worker bridges the cloud sandbox to your Mac. Enable per-repo from Settings → General.
 
 ## Install
 

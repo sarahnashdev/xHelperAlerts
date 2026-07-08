@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 — 2026-07-08
+
+**Web alerts for claude.ai/code cloud sessions.**
+
+- **New "Web alerts" section** in General settings. Cloud sessions can't reach your Mac, so a relay Worker bridges them: the repo-installed hook posts each notification to the relay and the app polls it, then raises the normal sound / banner / ring-back pipeline.
+- **"Enable for a repo…" button** installs the cloud hook into a repository's `.claude/settings.json` (cloud sessions only honor repo-level settings). Commit and push `.claude/`, and web sessions of that repo alert your Mac.
+- Device token is generated locally and identifies this Mac to the relay; alerts are drained on first poll and never stored longer than needed.
+
 ## 1.0.0 — 2026-06-26
 
 **Initial release.**

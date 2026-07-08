@@ -83,6 +83,29 @@ private struct GeneralSettingsTab: View {
     @EnvironmentObject var settings: AlertSettings
     @EnvironmentObject var accounts: AccountTracker
 
+    @State private var webAlertStatus = ""
+    @State private var webAlertStatusIsError = false
+
+    /// Pick a repository and install the cloud-alert hook into its
+    /// .claude/settings.json so claude.ai/code sessions relay here.
+    private func enableForRepo() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a repository to enable claude.ai/code web alerts for"
+        panel.prompt = "Enable web alerts"
+        guard panel.runModal() == .OK, let repo = panel.url else { return }
+        do {
+            try WebAlertRepoInstaller.install(into: repo, token: settings.ensureWebAlertToken())
+            webAlertStatus = "Enabled for \(repo.lastPathComponent) — commit .claude/ and push, then cloud sessions of that repo will alert here."
+            webAlertStatusIsError = false
+        } catch {
+            webAlertStatus = "Couldn't enable: \(error.localizedDescription)"
+            webAlertStatusIsError = true
+        }
+    }
+
     var body: some View {
         Form {
             Section("Notifications") {
@@ -126,6 +149,25 @@ private struct GeneralSettingsTab: View {
                         }
                         .disabled(!(settings.soundEnabled || settings.bannerEnabled))
                         Spacer()
+                    }
+                }
+            }
+
+            Section("Web alerts (claude.ai/code)") {
+                Toggle("Alert me from Claude Code web sessions", isOn: $settings.webAlertsEnabled)
+                    .help("Cloud sessions on claude.ai/code can't reach this Mac directly, so a relay hook forwards their notifications here. Requires enabling per repository below.")
+                if settings.webAlertsEnabled {
+                    Text("Cloud sessions only run hooks from a repository's own .claude/settings.json, so enable each repo you use on claude.ai/code. The hook and device token are committed to the repo — collaborators who run it will relay alerts to your Mac too, so use it on personal repos.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Button("Enable for a repo…") { enableForRepo() }
+                        Spacer()
+                    }
+                    if !webAlertStatus.isEmpty {
+                        Text(webAlertStatus)
+                            .font(.caption)
+                            .foregroundStyle(webAlertStatusIsError ? .orange : .secondary)
                     }
                 }
             }
