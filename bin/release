@@ -120,8 +120,13 @@ xml = xml.replace("</channel>", new_item + "  </channel>")
 with open(path, "w") as f: f.write(xml)
 PY
 
-echo "→ Commit + push appcast (triggers Cloudflare Pages redeploy)"
-git add website/appcast.xml
+echo "→ Commit + push source, version bump, and appcast (triggers Cloudflare Pages redeploy)"
+# Commit the app source and pbxproj version bump alongside the appcast so
+# main always matches the shipped binary (historically only the appcast was
+# committed, leaving releases with no corresponding source in git).
+git add website/appcast.xml \
+        xHelperAlerts.xcodeproj/project.pbxproj \
+        xHelperAlerts
 git commit -m "Release v$VERSION"
 git push
 
