@@ -187,5 +187,20 @@
         length="3962259"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.1.0</title>
+      <description><![CDATA[
+        <p>Web alerts for claude.ai/code cloud sessions — a relay bridges cloud notifications to your Mac. Enable per-repo from Settings → General → Web alerts.</p>
+      ]]></description>
+      <pubDate>Wed, 08 Jul 2026 21:19:54 +0000</pubDate>
+      <sparkle:version>13</sparkle:version>
+      <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.1.0/xHelperAlerts-1.1.0.dmg"
+        sparkle:edSignature="lpnBAlu65u1Z3KmgnTnsN3eEfhgJlFg/jYRzJuCHRbwuPu4eb1hIqttJUmCJqRN53fHuxSyaoyaDfeYyRVsJCw=="
+        length="3990996"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
