@@ -31,12 +31,31 @@ except Exception:
 ' 2>/dev/null)
 MESSAGE=${MESSAGE:-"Claude needs your attention"}
 
-# Hand the alert off to the Swift app via a file. The app applies the
-# user's sound + banner + ring-back preferences (read from config.json) —
-# we deliberately do NOT play the tone here, so the sound isn't doubled
-# and ring-back can replay it. Avoids `osascript -e "display notification"`,
-# which on macOS Tahoe routes through Script Editor.
-SAFE=$(printf '%s' "$MESSAGE" | tr '\n\t' '  ')
-printf 'xHelperAlerts\t%s\n' "$SAFE" >> "$HOME/.xhelper-alerts/banner-request"
+# Classify the notification so the banner title tells the user, at a glance,
+# WHY they're being pinged:
+#   • permission request → "🔐 Needs approval", enriched with what Claude
+#     wants to run (captured by the PreToolUse hook in ~/.xhelper-alerts/last-tool)
+#   • anything else (idle / waiting) → "⏳ Waiting"
+LOWER=$(printf '%s' "$MESSAGE" | tr '[:upper:]' '[:lower:]')
+if printf '%s' "$LOWER" | grep -q "permission"; then
+    TITLE="🔐 Needs approval"
+    LAST_TOOL_FILE="$HOME/.xhelper-alerts/last-tool"
+    if [ -s "$LAST_TOOL_FILE" ]; then
+        BODY=$(cat "$LAST_TOOL_FILE")
+    else
+        BODY="$MESSAGE"
+    fi
+else
+    TITLE="⏳ Waiting"
+    BODY="$MESSAGE"
+fi
+
+# Hand the alert off to the Swift app via a file ("<title>\t<body>"). The app
+# applies the user's sound + banner + ring-back preferences — we deliberately
+# do NOT play the tone here, so the sound isn't doubled and ring-back can
+# replay it. Avoids `osascript -e "display notification"` (Script Editor).
+SAFE_TITLE=$(printf '%s' "$TITLE" | tr '\n\t' '  ')
+SAFE_BODY=$(printf '%s' "$BODY" | tr '\n\t' '  ')
+printf '%s\t%s\n' "$SAFE_TITLE" "$SAFE_BODY" >> "$HOME/.xhelper-alerts/banner-request"
 
 exit 0

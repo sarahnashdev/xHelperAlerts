@@ -49,12 +49,14 @@ play_sound() {
 
 post_banner() {
     [ "$NOTIFICATIONS_ENABLED" = "true" ] || return 0
-    local message="${1:-Claude ran a tool}"
-    # Hand the alert off to the Swift app via a file. The app applies the
-    # user's sound + banner preferences, so we don't gate on banner here.
-    # Avoids `osascript -e "display notification"` (Script Editor on Tahoe).
-    local safe=$(printf '%s' "$message" | tr '\n\t' '  ')
-    printf 'xHelperAlerts\t%s\n' "$safe" >> "$HOME/.xhelper-alerts/banner-request"
+    local title="${1:-xHelperAlerts}"
+    local body="${2:-Claude ran a tool}"
+    # Hand the alert off to the Swift app via a file ("<title>\t<body>"). The
+    # app applies the user's sound + banner preferences, so we don't gate on
+    # banner here. Avoids `osascript -e "display notification"` (Script Editor).
+    local safe_title=$(printf '%s' "$title" | tr '\n\t' '  ')
+    local safe_body=$(printf '%s' "$body" | tr '\n\t' '  ')
+    printf '%s\t%s\n' "$safe_title" "$safe_body" >> "$HOME/.xhelper-alerts/banner-request"
 }
 
 # Pull tool name + a short command snippet out of the JSON payload for logging.
@@ -95,6 +97,14 @@ PY
 TOOL_NAME=$(printf '%s' "$TOOL_INFO" | cut -f1)
 SNIPPET=$(printf '%s' "$TOOL_INFO" | cut -f2-)
 
+# Record what Claude is about to run so the Notification hook can enrich a
+# "needs approval" banner with the actual tool + snippet. PreToolUse fires
+# immediately before the permission prompt, so this stays fresh.
+if [ -n "$TOOL_NAME" ] && [ "$TOOL_NAME" != "?" ]; then
+    printf 'Claude wants to run %s%s' "$TOOL_NAME" "${SNIPPET:+: ${SNIPPET:0:80}}" \
+        > "$HOME/.xhelper-alerts/last-tool" 2>/dev/null || true
+fi
+
 write_log_entry() {
     local decision="$1"
     /usr/bin/python3 - "$LOG" "$TOOL_NAME" "$SNIPPET" "$decision" <<'PY' 2>/dev/null
@@ -119,7 +129,7 @@ if [ "$AUTO" = "true" ]; then
     if [ "$NOTIFY_AUTO" = "true" ]; then
         # Don't play the tone here — post_banner hands off to the app, which
         # plays the user's sound when it shows the banner (single source).
-        post_banner "${TOOL_NAME:-tool} ${SNIPPET:0:60}"
+        post_banner "⚙️ Auto-approved" "Claude ran ${TOOL_NAME}${SNIPPET:+: ${SNIPPET:0:60}}"
     fi
     cat <<'JSON'
 {
@@ -145,7 +155,7 @@ case "$TOOL_NAME" in
     Bash|Write|Edit|MultiEdit|NotebookEdit)
         write_log_entry "pending_user_decision"
         if [ "$ALERT_EVERY" = "true" ]; then
-            post_banner "Claude is running ${TOOL_NAME}${SNIPPET:+: ${SNIPPET:0:60}}"
+            post_banner "⚙️ Running" "Claude is running ${TOOL_NAME}${SNIPPET:+: ${SNIPPET:0:60}}"
         fi
         ;;
     *)

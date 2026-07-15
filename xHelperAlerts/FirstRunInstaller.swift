@@ -11,7 +11,7 @@ import Foundation
 enum FirstRunInstaller {
 
     private static let configDirName = ".xhelper-alerts"
-    private static let hookScripts = ["xHelperAlerts.sh", "xhelper-auto-approve.sh"]
+    private static let hookScripts = ["xHelperAlerts.sh", "xhelper-auto-approve.sh", "xhelper-stop.sh"]
 
     static func runIfNeeded() {
         do {
@@ -70,6 +70,7 @@ enum FirstRunInstaller {
         let hooksDir = home.appendingPathComponent("\(configDirName)/hooks")
         let notify   = hooksDir.appendingPathComponent("xHelperAlerts.sh").path
         let approve  = hooksDir.appendingPathComponent("xhelper-auto-approve.sh").path
+        let stop     = hooksDir.appendingPathComponent("xhelper-stop.sh").path
 
         // Claude Code lives in two homes on the same Mac. Wire xHelperAlerts
         // into both so notifications fire regardless of which entry point
@@ -94,6 +95,7 @@ enum FirstRunInstaller {
             var hooks = (root["hooks"] as? [String: Any]) ?? [:]
             hooks["Notification"] = mergedHook(into: hooks["Notification"], command: notify)
             hooks["PreToolUse"]   = mergedHook(into: hooks["PreToolUse"],   command: approve)
+            hooks["Stop"]         = mergedHook(into: hooks["Stop"],         command: stop)
             root["hooks"] = hooks
 
             let out = try JSONSerialization.data(withJSONObject: root,

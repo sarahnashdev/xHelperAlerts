@@ -202,5 +202,20 @@
         length="3990996"
         type="application/octet-stream" />
     </item>
+      <item>
+      <title>Version 1.1.1</title>
+      <description><![CDATA[
+        <p>Smarter banners: new '✅ Your turn' alert when Claude finishes and is waiting for you, permission alerts now show what Claude wants to run, and each alert type has a distinct title so you can tell why at a glance.</p>
+      ]]></description>
+      <pubDate>Wed, 15 Jul 2026 23:10:05 +0000</pubDate>
+      <sparkle:version>14</sparkle:version>
+      <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/sarahnashdev/xHelperAlerts/releases/download/v1.1.1/xHelperAlerts-1.1.1.dmg"
+        sparkle:edSignature="uy4DD4qVGn9WBHlBz8X9Xe4Ccu7mSyaoHO0MBi3vEjokf7nahbtMOxPNFKzEC0EKSwC2dWaeunb3lbay4woMAw=="
+        length="3991450"
+        type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
